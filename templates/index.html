@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Spotify Playlists</title>
+    <script>
+        // Fetches playlist data from the server
+        async function fetchPlaylists() {
+            const response = await fetch('/fetch_playlists');  // Send a request to the server to get playlists
+            const data = await response.json();  // Parse the JSON response
+            return data;  // Return the playlist data
+        }
+
+        // Generates dropdown menus based on the number of playlists selected
+        function generateDropdowns(playlistData, numberOfPlaylists) {
+            const dropdownContainer = document.getElementById('dropdownContainer');
+            // Clear any previous dropdowns
+            dropdownContainer.innerHTML = '';
+
+            // Create dropdown menus dynamically
+            for (let i = 1; i <= numberOfPlaylists; i++) {
+                const label = document.createElement('label');
+                label.textContent = `Select Playlist ${i}: `;
+                label.htmlFor = `playlist${i}`;
+
+                const select = document.createElement('select');
+                select.name = `playlist${i}`;
+                select.id = `playlist${i}`;
+
+                // Populate dropdown with options from playlistData
+                playlistData.forEach(playlist => {
+                    const option = document.createElement('option');
+                    option.value = playlist[1];  // Set option value to playlist URL
+                    option.text = playlist[0];  // Set option text to playlist name
+                    select.appendChild(option);  // Add option to the dropdown
+                });
+
+                // Append label and dropdown to the container
+                dropdownContainer.appendChild(label);
+                dropdownContainer.appendChild(select);
+                dropdownContainer.appendChild(document.createElement('br'));  // Add line break for spacing
+            }
+        }
+
+        // Add an event listener for when the DOM content is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add an event listener to the number of playlists input field
+            document.getElementById('numberOfPlaylists').addEventListener('input', async function() {
+                const numberOfPlaylists = this.value;  // Get the number of playlists selected
+                const playlistData = await fetchPlaylists();  // Fetch playlist data
+                generateDropdowns(playlistData, numberOfPlaylists);  // Generate dropdowns based on the fetched data
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Select Playlists to Merge</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form action="/merge_playlists" method="POST">
+        <label for="numberOfPlaylists">Number of playlists to merge:</label>
+        <input type="number" id="numberOfPlaylists" name="numberOfPlaylists" min="2" max="6" required><br><br>
+
+        <div id="dropdownContainer"></div>  <!-- Container for dynamically generated dropdowns -->
+
+        <button type="submit">Merge Playlists</button>
+    </form>
+</body>
+</html>
